@@ -23,7 +23,8 @@ Currently, this project is an **MVP (Minimum Viable Product)** that demonstrates
 **Clone the repository**
    ```bash
    git clone https://github.com/charleschtsoi/ExpiryScanner.git
-   cd ExpiryScanner```
+   cd ExpiryScanner
+```
 
 Install dependencies
 
