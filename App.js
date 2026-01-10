@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Button, TouchableOpacity, Modal } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { registerForPushNotificationsAsync } from './utils/notifications';
 
 // --- MOCK DATABASE (MVP DATA) ---
 // In a real app, this data comes from a server.
@@ -16,6 +17,17 @@ export default function App() {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [scannedProduct, setScannedProduct] = useState(null);
+
+  // Register for push notifications on mount
+  useEffect(() => {
+    registerForPushNotificationsAsync().then(token => {
+      if (token) {
+        console.log('Push notification token registered:', token);
+      }
+    }).catch(error => {
+      console.error('Error registering for push notifications:', error);
+    });
+  }, []);
 
   // 1. HANDLE PERMISSIONS
   if (!permission) {
