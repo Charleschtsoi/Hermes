@@ -6,7 +6,7 @@ ExpiryScanner is a React Native mobile application built with Expo and Supabase 
 
 ### Core Functionality
 - **Barcode Scanning**: Instantly scan QR codes, EAN13, UPC, and other barcode formats using device camera
-- **AI-Powered Product Analysis**: Automatically identify products and estimate shelf life using OpenAI (GPT-4o-mini)
+- **AI-Powered Product Analysis**: Automatically identify products and estimate shelf life using OpenAI GPT-4o-mini
 - **Hybrid Fallback System**: Combines AI analysis with database lookup (`product_master_list`) for improved accuracy
 - **Manual Entry**: When AI cannot identify a product, users can manually enter product details including batch codes
 - **Expiration Tracking**: Calculate and display days until expiry with color-coded status indicators
@@ -49,12 +49,12 @@ ExpiryScanner is a React Native mobile application built with Expo and Supabase 
 - Expo CLI (`npm install -g expo-cli`)
 - Expo Go app on your device (iOS/Android)
 - Supabase account (for backend features)
-- OpenAI API key (for AI analysis)
+- OpenAI API key (for AI analysis) - Already configured in the Edge Function
 
 ### Step 1: Clone the Repository
-```bash
+   ```bash
 git clone https://github.com/your-username/ExpiryScanner.git
-cd ExpiryScanner
+   cd ExpiryScanner
 ```
 
 ### Step 2: Install Dependencies
@@ -113,7 +113,7 @@ supabase functions deploy analyze-product
 ```
 
 **Edge Function Environment Variables** (set in Supabase Dashboard):
-- `OPENAI_API_KEY` - Your OpenAI API key
+- `OPENAI_API_KEY` - Your OpenAI API key (already configured as fallback in the Edge Function)
 - `SUPABASE_URL` - Your Supabase project URL
 - `SUPABASE_SERVICE_ROLE_KEY` - Your Supabase service role key (for database access)
 
@@ -159,7 +159,7 @@ The app automatically loads Supabase credentials from:
 ### AI Analysis Configuration
 AI features require:
 - ✅ Supabase Edge Function deployed
-- ✅ OpenAI API key configured in Edge Function
+- ✅ OpenAI API key configured (already set in Edge Function as fallback)
 - ✅ Valid Supabase credentials in `.env`
 
 If not configured, the app will:
@@ -285,7 +285,7 @@ Master database for product lookups:
 
 **2. "AI failed to understand product"**
 - Check Edge Function is deployed and configured
-- Verify OpenAI API key is set in Supabase Edge Function environment
+- Verify OpenAI API key is set in Supabase Edge Function environment (already configured as fallback)
 - Manual entry modal should open automatically as fallback
 - See [DEBUGGING_AI_CONNECTION.md](./DEBUGGING_AI_CONNECTION.md)
 
@@ -344,7 +344,7 @@ This project is private and proprietary.
 - [ ] Install dependencies (`npm install`)
 - [ ] Create `.env` file with Supabase credentials
 - [ ] Run database migrations
-- [ ] Deploy Edge Function with OpenAI API key
+- [ ] Deploy Edge Function (OpenAI API key already configured)
 - [ ] Configure Edge Function environment variables
 - [ ] Start Expo dev server (`npx expo start`)
 - [ ] Test on device with Expo Go

@@ -3,6 +3,8 @@ import { StyleSheet, Text, View, Button, TouchableOpacity, Modal, ActivityIndica
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { registerForPushNotificationsAsync } from './utils/notifications';
 import { analyzeProductFromBarcode, isAIAnalysisConfigured, AIAnalysisError } from './services/aiAnalysis';
+import { addInventoryItem } from './services/inventory';
+import InventoryScreen from './screens/InventoryScreen';
 
 export default function App() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -17,6 +19,8 @@ export default function App() {
   const [manualCategory, setManualCategory] = useState('');
   const [manualExpiryDate, setManualExpiryDate] = useState('');
   const [aiErrorMessage, setAiErrorMessage] = useState(''); // Store the AI error message
+  const [showInventory, setShowInventory] = useState(false); // Control inventory screen visibility
+  const [savingToInventory, setSavingToInventory] = useState(false); // Track save operation
 
   // Register for push notifications on mount
   useEffect(() => {
@@ -89,6 +93,11 @@ export default function App() {
     );
   }
 
+  // Show inventory screen if requested
+  if (showInventory) {
+    return <InventoryScreen onBack={() => setShowInventory(false)} />;
+  }
+
   // Show home screen if not scanning
   if (!isScanning) {
     return (
@@ -121,6 +130,14 @@ export default function App() {
             <Text style={styles.scanButtonText}>
               {permission.granted ? 'Start Scanning' : 'Grant Camera Permission'}
             </Text>
+          </TouchableOpacity>
+
+          {/* View Inventory Button */}
+          <TouchableOpacity 
+            style={styles.inventoryButton}
+            onPress={() => setShowInventory(true)}
+          >
+            <Text style={styles.inventoryButtonText}>View Inventory</Text>
           </TouchableOpacity>
 
           {!permission.granted && (
@@ -232,6 +249,59 @@ export default function App() {
       console.log('❌ AI failed, opening manual entry modal:', errorMessage);
     } finally {
       setIsAnalyzing(false);
+    }
+  };
+
+  // Handle saving product to inventory
+  const handleSaveToInventory = async () => {
+    if (!scannedProduct) {
+      return;
+    }
+
+    try {
+      setSavingToInventory(true);
+
+      // Calculate expiry date from days left
+      const expiryDate = scannedProduct.daysLeft !== undefined
+        ? new Date(Date.now() + scannedProduct.daysLeft * 24 * 60 * 60 * 1000)
+            .toISOString()
+            .split('T')[0]
+        : null;
+
+      await addInventoryItem({
+        barcode: scannedProduct.barcode || null,
+        product_name: scannedProduct.name || null,
+        category: scannedProduct.category || null,
+        expiry_date: expiryDate,
+        ai_confidence: scannedProduct.confidenceScore || null,
+      });
+
+      Alert.alert(
+        'Success',
+        'Product saved to inventory!',
+        [
+          {
+            text: 'View Inventory',
+            onPress: () => {
+              closeResult();
+              setShowInventory(true);
+            },
+          },
+          {
+            text: 'OK',
+            onPress: closeResult,
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('Error saving to inventory:', error);
+      Alert.alert(
+        'Error',
+        'Failed to save product to inventory. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setSavingToInventory(false);
     }
   };
 
@@ -408,6 +478,22 @@ export default function App() {
                 </Text>
               )}
             </View>
+
+            {/* Save to Inventory Button */}
+            <TouchableOpacity 
+              style={[styles.saveButton, savingToInventory && styles.saveButtonDisabled]} 
+              onPress={handleSaveToInventory}
+              disabled={savingToInventory}
+            >
+              {savingToInventory ? (
+                <>
+                  <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 8 }} />
+                  <Text style={styles.saveButtonText}>Saving...</Text>
+                </>
+              ) : (
+                <Text style={styles.saveButtonText}>Save to Inventory</Text>
+              )}
+            </TouchableOpacity>
 
             <View style={styles.resultButtons}>
               <TouchableOpacity style={styles.scanBtn} onPress={closeResult}>
@@ -783,6 +869,25 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
   },
+  inventoryButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 18,
+    paddingHorizontal: 60,
+    borderRadius: 30,
+    marginTop: 15,
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    minWidth: 250,
+  },
+  inventoryButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
   permissionHint: {
     marginTop: 16,
     fontSize: 14,
@@ -863,6 +968,25 @@ const styles = StyleSheet.create({
     zIndex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  saveButton: {
+    backgroundColor: '#34C759',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 12,
+    marginBottom: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  saveButtonDisabled: {
+    backgroundColor: '#999',
+    opacity: 0.7,
+  },
+  saveButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
   resultButtons: {
     width: '100%',

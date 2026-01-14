@@ -36,7 +36,7 @@ export class AIAnalysisError extends Error {
 }
 
 /**
- * Analyzes a product using AI service (OpenAI GPT-4o via Supabase Edge Function)
+ * Analyzes a product using AI service (OpenAI GPT-4o-mini via Supabase Edge Function)
  * 
  * This function can analyze products from:
  * - Barcode/QR code data
@@ -92,8 +92,26 @@ export async function analyzeProduct(
 
     if (error) {
       console.error('❌ Edge Function error:', error);
+      console.error('❌ Error details:', JSON.stringify(error, null, 2));
+      
+      // Try to get more details about the error
+      if (error.context) {
+        console.error('❌ Error context:', error.context);
+      }
+      if (error.message) {
+        console.error('❌ Error message:', error.message);
+      }
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to analyze product';
+      if (error.message?.includes('non-2xx')) {
+        errorMessage = 'Edge Function returned an error. Please check: 1) Is the Edge Function deployed? 2) Is OPENAI_API_KEY configured?';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       throw new AIAnalysisError(
-        error.message || 'Failed to analyze product',
+        errorMessage,
         'EDGE_FUNCTION_ERROR',
         error
       );
@@ -108,9 +126,11 @@ export async function analyzeProduct(
 
     // Check if the response contains an error property
     if (data.error) {
+      console.error('❌ AI service returned error:', data.error);
       throw new AIAnalysisError(
         data.error || 'Error from AI service',
-        'AI_SERVICE_ERROR'
+        'AI_SERVICE_ERROR',
+        data
       );
     }
 
